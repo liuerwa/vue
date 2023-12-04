@@ -19,20 +19,30 @@ import platformComponents from './components/index'
 import type { Component } from 'types/component'
 
 // install platform specific utils
+// 配置平台相关方法
+// 判断是否是必须绑定prop的元素，比如input必须有value属性等
 Vue.config.mustUseProp = mustUseProp
+// 检测是否是保留标签，包含HTML标签和svg标签
 Vue.config.isReservedTag = isReservedTag
+// 检测是否是保留属性，包含class和style
 Vue.config.isReservedAttr = isReservedAttr
+// 获取标签命名空间
 Vue.config.getTagNamespace = getTagNamespace
+// 检测是否是未知类型的元素
 Vue.config.isUnknownElement = isUnknownElement
 
 // install platform runtime directives & components
+// 挂载平台相关指令，platformDirectives 包含v-model和v-show
 extend(Vue.options.directives, platformDirectives)
+// 挂载平台相关组件，platformComponents 包含Transition和TransitionGroup
 extend(Vue.options.components, platformComponents)
 
 // install platform patch function
+// 挂载patch函数，即vnode dom diff函数
 Vue.prototype.__patch__ = inBrowser ? patch : noop
 
 // public mount method
+// 挂载 $mount 函数
 Vue.prototype.$mount = function (
   el?: string | Element,
   hydrating?: boolean

@@ -28,11 +28,14 @@ export function initGlobalAPI(Vue: GlobalAPI) {
       )
     }
   }
+
+  // def Vue配置config
   Object.defineProperty(Vue, 'config', configDef)
 
   // exposed util methods.
   // NOTE: these are not considered part of the public API - avoid relying on
   // them unless you are aware of the risk.
+  // 定义util对象
   Vue.util = {
     warn,
     extend,
@@ -40,17 +43,23 @@ export function initGlobalAPI(Vue: GlobalAPI) {
     defineReactive
   }
 
+  // 定义set函数
   Vue.set = set
+  // 定义delete函数
   Vue.delete = del
+  // 定义nextTick函数
   Vue.nextTick = nextTick
 
   // 2.6 explicit observable API
+   //暴露observable函数
   Vue.observable = <T>(obj: T): T => {
     observe(obj)
     return obj
   }
 
+  //创建options空对象
   Vue.options = Object.create(null)
+    // 定义components,directives,filters，空对象
   ASSET_TYPES.forEach(type => {
     Vue.options[type + 's'] = Object.create(null)
   })
@@ -59,10 +68,15 @@ export function initGlobalAPI(Vue: GlobalAPI) {
   // components with in Weex's multi-instance scenarios.
   Vue.options._base = Vue
 
+  // 挂载组件，KeepLive
   extend(Vue.options.components, builtInComponents)
 
+  // 定义Vue.use函数
   initUse(Vue)
+  // 定义Vue.mixin函数
   initMixin(Vue)
+  // 定义Vue.extend函数
   initExtend(Vue)
+  // 定义Vue.compoenent、Vue.directive、Vue.filter函数
   initAssetRegisters(Vue)
 }

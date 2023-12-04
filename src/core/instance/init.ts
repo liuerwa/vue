@@ -16,6 +16,8 @@ let uid = 0
 export function initMixin(Vue: typeof Component) {
   Vue.prototype._init = function (options?: Record<string, any>) {
     const vm: Component = this
+
+    // 赋值，_uid,也就是虚拟dom的key
     // a uid
     vm._uid = uid++
 
@@ -27,6 +29,7 @@ export function initMixin(Vue: typeof Component) {
       mark(startTag)
     }
 
+    // 赋值，标识为Vue
     // a flag to mark this as a Vue instance without having to do instanceof
     // check
     vm._isVue = true
@@ -35,6 +38,8 @@ export function initMixin(Vue: typeof Component) {
     // effect scope
     vm._scope = new EffectScope(true /* detached */)
     vm._scope._vm = true
+
+    // 判断调用，_isComponent不是Vue内部属性，初始化的时候会走到下面
     // merge options
     if (options && options._isComponent) {
       // optimize internal component instantiation
@@ -42,6 +47,7 @@ export function initMixin(Vue: typeof Component) {
       // internal component options needs special treatment.
       initInternalComponent(vm, options as any)
     } else {
+       // 使用合并策略，对options进行合并，并赋值给$options
       vm.$options = mergeOptions(
         resolveConstructorOptions(vm.constructor as any),
         options || {},
@@ -52,17 +58,27 @@ export function initMixin(Vue: typeof Component) {
     if (__DEV__) {
       initProxy(vm)
     } else {
+      // 代理
       vm._renderProxy = vm
     }
+    // 代理
     // expose real self
     vm._self = vm
+    // 初始化生命周期，也就是简单的赋值
     initLifecycle(vm)
+    // 初始化事件处理机制
     initEvents(vm)
+    // 初始化渲染函数，给$createElement等赋值
     initRender(vm)
+    // 调用生命周期钩子函数beforeCreate
     callHook(vm, 'beforeCreate', undefined, false /* setContext */)
+    // 初始化inject，父子通信相关
     initInjections(vm) // resolve injections before data/props
+    // 划重点，data、props、watch、computed、methods等全部初始化完毕
     initState(vm)
+    // 初始化provide，父子通信相关
     initProvide(vm) // resolve provide after data/props
+    // 调用生命周期钩子函数，created
     callHook(vm, 'created')
 
     /* istanbul ignore if */

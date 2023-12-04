@@ -417,23 +417,30 @@ export function mergeOptions(
     checkComponents(child)
   }
 
+  // 如果是子组件，则获取子组件的options
   if (isFunction(child)) {
     // @ts-expect-error
     child = child.options
   }
 
+  // 处理child的Props
   normalizeProps(child, vm)
+  // 处理child的inject，对inject进行封装,标记from
   normalizeInject(child, vm)
+  // 处理child的directives,如为函数，则设置为bind和update时调用
   normalizeDirectives(child)
 
   // Apply extends and mixins on the child options,
   // but only if it is a raw options object that isn't
   // the result of another mergeOptions call.
   // Only merged options has the _base property.
+  // 如果不是最顶层的child，最顶层的parent
   if (!child._base) {
+    // 对extends进行递归调用合并
     if (child.extends) {
       parent = mergeOptions(parent, child.extends, vm)
     }
+    // 对mixins进行递归调用合并
     if (child.mixins) {
       for (let i = 0, l = child.mixins.length; i < l; i++) {
         parent = mergeOptions(parent, child.mixins[i], vm)
@@ -441,6 +448,7 @@ export function mergeOptions(
     }
   }
 
+  // 根据合并策略strats合并options
   const options: ComponentOptions = {} as any
   let key
   for (key in parent) {
