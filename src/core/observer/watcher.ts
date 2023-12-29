@@ -39,25 +39,25 @@ export interface WatcherOptions extends DebuggerOptions {
  * @internal
  */
 export default class Watcher implements DepTarget {
-  vm?: Component | null
-  expression: string
-  cb: Function
-  id: number
-  deep: boolean
-  user: boolean
-  lazy: boolean
-  sync: boolean
-  dirty: boolean
-  active: boolean
-  deps: Array<Dep>
-  newDeps: Array<Dep>
-  depIds: SimpleSet
-  newDepIds: SimpleSet
-  before?: Function
+  vm?: Component | null // 实例
+  expression: string // 表达式，要监听的value的字符串表达
+  cb: Function // 回调函数
+  id: number // 当前watcher实例的一个计数，从1开始
+  deep: boolean // 是否深度监听，取值为options.deep，默认false
+  user: boolean // 是否是用户触发的watcher，取值为options.user，只有$watch调用生成的watcher实例才会是true，默认为false
+  lazy: boolean // 是否是懒处理，取值为options.lazy，只有computed的属性创造的实例才会是true，默认为false
+  sync: boolean // 是否是同步执行，取值为options.sync，只有watch调用生成的watcher实例才有可能是true，此处之所以为有可能，是因为此值是由用户调用watch调用生成的watcher实例才有可能是true，此处之所以为有可能，是因为此值是由用户调用watch调用生成的watcher实例才有可能是true，此处之所以为有可能，是因为此值是由用户调用watch的时候传进来的，只有传为true的时候才会为true，默认为false
+  dirty: boolean // 有影响的，是否需要对此值进行重新获取；只有computed的属性创造的实例才会是true，默认为false
+  active: boolean // 当前watcher是否还有效，默认值为true
+  deps: Array<Dep> // 是一个存储依赖Dep的数组，默认值为[]
+  newDeps: Array<Dep> // 是一个存储依赖Dep的数组，默认值为[]，区别在于，此次更新后，收集到的下一轮更新所相关的依赖
+  depIds: SimpleSet // 存储deps对应的dep的id所组成的一个Set，默认值为空Set
+  newDepIds: SimpleSet // 存储newDeps对应的dep的id所组成的一个Set，默认值为空Set
+  before?: Function // 是一个函数，存储更新之前所需要调用的函数，取值为options.before，$watch调用生成的watcher实例有可能有值；再就是mount函数里面会有值，此处的值为调用beforeUpdate钩子函数，默认值为null
   onStop?: Function
   noRecurse?: boolean
-  getter: Function
-  value: any
+  getter: Function // 获取监听的value的函数
+  value: any // 值，监听的对象的值
   post: boolean
 
   // dev only
@@ -124,6 +124,7 @@ export default class Watcher implements DepTarget {
           )
       }
     }
+    // 等于new Watcher(),会设置Dep.target
     this.value = this.lazy ? undefined : this.get()
   }
 
@@ -131,10 +132,12 @@ export default class Watcher implements DepTarget {
    * Evaluate the getter, and re-collect dependencies.
    */
   get() {
-    pushTarget(this)
     let value
+    // 此处会改变Dep.target为当前Watcher实例
+    pushTarget(this)
     const vm = this.vm
     try {
+      // 调用getter方法，获取value
       value = this.getter.call(vm, vm)
     } catch (e: any) {
       if (this.user) {
@@ -146,8 +149,10 @@ export default class Watcher implements DepTarget {
       // "touch" every property so they are all tracked as
       // dependencies for deep watching
       if (this.deep) {
+        // 如果深度监听，调用traverse
         traverse(value)
       }
+      // 把Dep.target返回到之前的状态
       popTarget()
       this.cleanupDeps()
     }

@@ -151,9 +151,11 @@ function initData(vm: Component) {
           vm
         )
     } else if (!isReserved(key)) {
-      proxy(vm, `_data`, key)
+      proxy(vm, `_data`, key) // 使得this.key === this._data.key
     }
   }
+  // 监听整个data
+  // data数据改动最为频繁，而且data可能会有很深的{}层次
   // observe data
   const ob = observe(data)
   ob && ob.vmCount++

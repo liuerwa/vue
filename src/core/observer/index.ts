@@ -53,7 +53,7 @@ export class Observer {
 
   constructor(public value: any, public shallow = false, public mock = false) {
     // this.value = value
-    this.dep = mock ? mockDep : new Dep()
+    this.dep = mock ? mockDep : new Dep() // 收集依赖的容器Dep
     // 初始化实例的vmCount 为 0
     this.vmCount = 0
     // 将当前Observer实例挂载到观察对象value的__ob__属性
@@ -155,6 +155,7 @@ export function observe(
  * @param mock 
  * @returns 
  */
+// defineReactive 的功能就是定义一个响应式对象，给对象动态添加 getter 和 setter，在getter中收集Watcher，在setter执行Watcher逻辑（getter、setter执行时间很巧妙）。
 export function defineReactive(
   obj: object,
   key: string,
@@ -163,6 +164,7 @@ export function defineReactive(
   shallow?: boolean,
   mock?: boolean
 ) {
+  // 每一个key/value，都会创建一个Dep用来管理Watch队列
   const dep = new Dep()
 
   // 判断了当前对象的当前属性是否是可改变，不可改变，直接返回
@@ -182,13 +184,18 @@ export function defineReactive(
     val = obj[key]
   }
 
-  let childOb = !shallow && observe(val, false, mock)
+  // 对子对象递归调用 observe 方法。
+  // 这样就保证了无论 obj 的结构多复杂，它的所有子属性也能变成响应式的对象，这样我们访问或修改 obj 中一个嵌套较深的属性，也能触发 getter 和 setter。
+  let childOb = !shallow && observe(val, false, mock) // 如果时复杂数据，递归调用defineReactive
   Object.defineProperty(obj, key, {
     enumerable: true,
     configurable: true,
+    // get方法调用时间：$mount()执行时，模板编译会访问类似this.xxx，从而触发getter方法
     get: function reactiveGetter() {
       // 从 getter 函数或者直接的 val 属性中获取属性值
       const value = getter ? getter.call(obj) : val
+      // 非常巧妙的设计，在此收集Watch依赖（Dep.target = Watcher）
+      // 在new Watcher()的构造中，会设置Dep.target = this。./watcher.js
       // 存在目标依赖
       if (Dep.target) {
         // 开发环境，传递相关信息给 依赖收集器，包括目标对象、操作类型和属性键
@@ -199,6 +206,7 @@ export function defineReactive(
             key
           })
         } else {
+          // Watcher收集Dep,同时Dep收集当前Watcher
           // 通知当前属性的依赖收集器（Dep）收集依赖关系
           dep.depend()
         }
@@ -236,6 +244,7 @@ export function defineReactive(
       } else {
         val = newVal
       }
+      // 对设置的新值，重新监听（设置闭环）
       // 如果不是浅层观察且需要对新值进行观察，并将返回的子观察者赋值给 childOb
       // 如果新值是对象，观察子对象并返回 子的observer对象
       childOb = !shallow && observe(newVal, false, mock)
@@ -248,6 +257,7 @@ export function defineReactive(
           oldValue: value
         })
       } else {
+        // 收集的Watcher开始处理逻辑
         // 派发更新（发布更改通知）
         // 通知依赖进行更新
         dep.notify()

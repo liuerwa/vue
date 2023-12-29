@@ -40,10 +40,12 @@ export default class Dep {
     this.subs = []
   }
 
+  // Dep收集依赖（Watcher）
   addSub(sub: DepTarget) {
     this.subs.push(sub)
   }
 
+  // 删除依赖的函数
   removeSub(sub: DepTarget) {
     // #12696 deps with massive amount of subscribers are extremely slow to
     // clean up in Chromium
@@ -56,8 +58,11 @@ export default class Dep {
     }
   }
 
+  // 依赖收集的函数
   depend(info?: DebuggerEventExtraInfo) {
     if (Dep.target) {
+      // Watcher也收集着Dep
+      // 此处会调用Watcher实例的addDep函数(会有去重操作)
       Dep.target.addDep(this)
       if (__DEV__ && info && Dep.target.onTrack) {
         Dep.target.onTrack({
@@ -68,8 +73,10 @@ export default class Dep {
     }
   }
 
+  // 通知函数，此处会循环所有的依赖(Watcher实例)，然后调用实例的update方法
   notify(info?: DebuggerEventExtraInfo) {
     // stabilize the subscriber list first
+    // subs = watchers
     const subs = this.subs.filter(s => s) as DepTarget[]
     if (__DEV__ && !config.async) {
       // subs aren't sorted in scheduler if not running async
@@ -94,6 +101,7 @@ export default class Dep {
 // The current target watcher being evaluated.
 // This is globally unique because only one watcher
 // can be evaluated at a time.
+// Dep.target设置，同一时间（同步代码），Dep.target只有一个
 Dep.target = null
 const targetStack: Array<DepTarget | null | undefined> = []
 
