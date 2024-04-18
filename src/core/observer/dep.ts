@@ -31,7 +31,7 @@ export interface DepTarget extends DebuggerOptions {
 export default class Dep {
   static target?: DepTarget | null
   id: number
-  subs: Array<DepTarget | null>
+  subs: Array<DepTarget | null> // 订阅者列表，向当前 Dep 实例的订阅者列表 subs 中添加一个观察者（Watcher）
   // pending subs cleanup
   _pending = false
 
